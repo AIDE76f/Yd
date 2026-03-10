@@ -2,32 +2,34 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
-local Player = Players.LocalPlayer
-local Character = Player.Character or Player.CharacterAdded:Wait()
-local Humanoid = Character:WaitForChild("Humanoid")
-local HRP = Character:WaitForChild("HumanoidRootPart")
+local player = Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local humanoid = char:WaitForChild("Humanoid")
+local root = char:WaitForChild("HumanoidRootPart")
 
+-------------------------------------------------
 -- Variables
+-------------------------------------------------
+
 local AutoFarm = false
-local WalkCircle = false
 local AutoJump = false
+local WalkCircle = false
 
 -------------------------------------------------
 -- GUI
 -------------------------------------------------
 
 local gui = Instance.new("ScreenGui")
-gui.Name = "SpeedHub"
 gui.Parent = game.CoreGui
 
 local main = Instance.new("Frame",gui)
-main.Size = UDim2.new(0,260,0,220)
+main.Size = UDim2.new(0,270,0,200)
 main.Position = UDim2.new(0,20,0,20)
 main.BackgroundColor3 = Color3.fromRGB(25,25,25)
 main.Active = true
 main.Draggable = true
 
-Instance.new("UICorner",main).CornerRadius = UDim.new(0,10)
+Instance.new("UICorner",main)
 
 local title = Instance.new("TextLabel",main)
 title.Size = UDim2.new(1,0,0,35)
@@ -37,36 +39,50 @@ title.TextColor3 = Color3.new(1,1,1)
 title.Font = Enum.Font.GothamBold
 title.TextSize = 18
 
--- Close Button
+-------------------------------------------------
+-- CLOSE
+-------------------------------------------------
+
 local close = Instance.new("TextButton",main)
 close.Size = UDim2.new(0,30,0,25)
 close.Position = UDim2.new(1,-35,0,5)
 close.Text = "X"
-close.BackgroundColor3 = Color3.fromRGB(200,50,50)
-close.TextColor3 = Color3.new(1,1,1)
+close.BackgroundColor3 = Color3.fromRGB(200,60,60)
 
 close.MouseButton1Click:Connect(function()
-    gui:Destroy()
+gui:Destroy()
 end)
 
--- Hide Button
+-------------------------------------------------
+-- HIDE SYSTEM
+-------------------------------------------------
+
+local openBtn = Instance.new("TextButton",gui)
+openBtn.Size = UDim2.new(0,60,0,35)
+openBtn.Position = UDim2.new(0,20,0,20)
+openBtn.Text = "OPEN"
+openBtn.Visible = false
+openBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+
+Instance.new("UICorner",openBtn)
+
 local hide = Instance.new("TextButton",main)
-hide.Size = UDim2.new(0,30,0,25)
-hide.Position = UDim2.new(1,-70,0,5)
+hide.Size = UDim2.new(0,40,0,25)
+hide.Position = UDim2.new(1,-80,0,5)
 hide.Text = "-"
 hide.BackgroundColor3 = Color3.fromRGB(200,150,0)
-hide.TextColor3 = Color3.new(1,1,1)
 
-local hidden = false
 hide.MouseButton1Click:Connect(function()
 
-    hidden = not hidden
+main.Visible = false
+openBtn.Visible = true
 
-    for _,v in pairs(main:GetChildren()) do
-        if v:IsA("TextButton") and v ~= hide and v ~= close then
-            v.Visible = not hidden
-        end
-    end
+end)
+
+openBtn.MouseButton1Click:Connect(function()
+
+main.Visible = true
+openBtn.Visible = false
 
 end)
 
@@ -74,21 +90,45 @@ end)
 -- Button creator
 -------------------------------------------------
 
-local function Button(text,pos,callback)
+local function ToggleButton(text,pos,callback)
 
-    local b = Instance.new("TextButton",main)
+local holder = Instance.new("Frame",main)
+holder.Size = UDim2.new(0,230,0,40)
+holder.Position = UDim2.new(0,20,0,pos)
+holder.BackgroundTransparency = 1
 
-    b.Size = UDim2.new(0,220,0,40)
-    b.Position = UDim2.new(0,20,0,pos)
-    b.Text = text
-    b.Font = Enum.Font.GothamBold
-    b.TextSize = 14
-    b.TextColor3 = Color3.new(1,1,1)
-    b.BackgroundColor3 = Color3.fromRGB(40,40,40)
+local btn = Instance.new("TextButton",holder)
+btn.Size = UDim2.new(1,0,1,0)
+btn.Text = text
+btn.Font = Enum.Font.GothamBold
+btn.TextSize = 14
+btn.TextColor3 = Color3.new(1,1,1)
+btn.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
-    Instance.new("UICorner",b)
+Instance.new("UICorner",btn)
 
-    b.MouseButton1Click:Connect(callback)
+local indicator = Instance.new("Frame",holder)
+indicator.Size = UDim2.new(0,15,0,15)
+indicator.Position = UDim2.new(1,-25,0.5,-7)
+indicator.BackgroundColor3 = Color3.fromRGB(200,0,0)
+
+Instance.new("UICorner",indicator)
+
+local state = false
+
+btn.MouseButton1Click:Connect(function()
+
+state = not state
+
+if state then
+indicator.BackgroundColor3 = Color3.fromRGB(0,200,0)
+else
+indicator.BackgroundColor3 = Color3.fromRGB(200,0,0)
+end
+
+callback(state)
+
+end)
 
 end
 
@@ -96,78 +136,92 @@ end
 -- Buttons
 -------------------------------------------------
 
-Button("Auto Farm",50,function()
-    AutoFarm = not AutoFarm
+ToggleButton("Auto Farm",50,function(v)
+AutoFarm = v
 end)
 
-Button("Walk Circle",100,function()
-    WalkCircle = not WalkCircle
+ToggleButton("Walk Circle",100,function(v)
+WalkCircle = v
 end)
 
-Button("Auto Jump",150,function()
-    AutoJump = not AutoJump
+ToggleButton("Auto Jump",150,function(v)
+AutoJump = v
 end)
 
 -------------------------------------------------
--- Features
+-- Auto Jump
 -------------------------------------------------
 
 RunService.RenderStepped:Connect(function()
 
-    if AutoJump then
-        Humanoid.Jump = true
-    end
+if AutoJump then
+humanoid.Jump = true
+end
 
 end)
 
--- Circle movement (REAL WALK)
+-------------------------------------------------
+-- Walk Circle
+-------------------------------------------------
+
 task.spawn(function()
 
-    local angle = 0
-    local radius = 30
+local angle = 0
+local radius = 25
 
-    while true do
-        task.wait()
+while true do
+task.wait()
 
-        if WalkCircle then
+if WalkCircle then
 
-            angle += 0.05
+angle += 0.05
 
-            local target = HRP.Position + Vector3.new(
-                math.cos(angle)*radius,
-                0,
-                math.sin(angle)*radius
-            )
+local pos = root.Position + Vector3.new(
+math.cos(angle)*radius,
+0,
+math.sin(angle)*radius
+)
 
-            Humanoid:MoveTo(target)
+humanoid:MoveTo(pos)
 
-        end
+end
 
-    end
+end
 
 end)
 
+-------------------------------------------------
 -- Auto Farm
+-------------------------------------------------
+
 task.spawn(function()
 
-    while true do
-        task.wait(0.2)
+while true do
+task.wait(0.2)
 
-        if AutoFarm then
+if AutoFarm then
 
-            for _,v in pairs(workspace:GetDescendants()) do
+for _,v in pairs(workspace:GetDescendants()) do
 
-                if v:IsA("Part") and string.find(v.Name,"Orb") then
+if v:IsA("Part") then
 
-                    Humanoid:MoveTo(v.Position)
-                    task.wait(0.05)
+local name = v.Name:lower()
 
-                end
+if string.find(name,"orb") 
+or string.find(name,"gem") 
+or string.find(name,"step") then
 
-            end
+humanoid:MoveTo(v.Position)
+task.wait(0.05)
 
-        end
+end
 
-    end
+end
+
+end
+
+end
+
+end
 
 end)
